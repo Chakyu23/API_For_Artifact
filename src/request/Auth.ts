@@ -3,9 +3,10 @@ import {URL_API} from "@/constants";
 export async function bankGold(Token: string): Promise<number | null> {
     if (!Token) return null
 
-    const url = URL_API + '/my/bank/gold'
+    console.log(Token);
+    const url = URL_API + '/my/bank'
     const options = {
-        method: 'POST',
+        method: 'GET',
         headers: {
             'Content-Type': 'application/json',
             Accept: 'application/json',
@@ -26,8 +27,8 @@ export async function bankGold(Token: string): Promise<number | null> {
         }
 
         const json = await response.json()
-        const gold = json?.data?.data?.gold
-
+        const gold = json?.data?.gold
+        console.log(json)
         return typeof gold === 'number' ? gold : 0
     } catch (error) {
         console.error('Gold fetch error:', error)

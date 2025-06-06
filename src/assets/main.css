@@ -75,3 +75,9 @@ button {
 .bold {
     font-weight: bold;
 }
+
+.error {
+    margin-top: 0.5rem;
+    color: darkred;
+    font-weight: bold;
+}

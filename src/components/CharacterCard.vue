@@ -44,11 +44,19 @@
 
       <div class="action-box">
         <img
-            @click="onMove"
-            src="@/assets/Fight-32px.png"
+            @click="!isInCooldown && (showMovePopup = true)"
+            src="@/assets/Move-32px.png"
             alt=""
             class="icon32 iconButton"
             :class="{ disabled: isInCooldown }"
+        />
+
+        <PopupForm
+            v-if="showMovePopup"
+            title="Déplacement"
+            :fields="moveFields"
+            @submit="handleMoveSubmit"
+            @close="showMovePopup = false"
         />
         <img
             @click="onRest"
@@ -59,7 +67,7 @@
         />
         <img
             @click="onBattle"
-            src="@/assets/Move-32px.png"
+            src="@/assets/Fight-32px.png"
             alt=""
             class="icon32 iconButton"
             :class="{ disabled: isInCooldown }"
@@ -78,14 +86,14 @@
 </template>
 
 <script lang="ts" setup>
+import { ref, computed, onUnmounted } from 'vue'
 import type { Character } from '@/stores/character'
-import { computed, onUnmounted, ref } from 'vue'
+import PopupForm, { type Field } from '@/components/PopupForm.vue'
 
-const props = defineProps<{
-  character: Character
-}>()
+const props = defineProps<{ character: Character }>()
 
 const now = ref(Date.now())
+const showMovePopup = ref(false)
 
 const cooldownEnd = computed(() =>
     props.character.cooldownExpiration ? new Date(props.character.cooldownExpiration).getTime() : 0
@@ -111,36 +119,30 @@ const cooldownRemaining = computed(() => {
       : `${seconds}s`
 })
 
-const hpPercent = computed(() =>
-    Math.min(100, (props.character.currentHp / props.character.maxHp) * 100)
-)
+const moveFields: Field[] = [
+  { name: 'x', label: 'Coordonnée X', type: 'number', required: true },
+  { name: 'y', label: 'Coordonnée Y', type: 'number', required: true }
+]
 
-const xpPercent = computed(() =>
-    Math.min(100, (props.character.xp / props.character.xpToNextLevel) * 100)
-)
-
-const interval = setInterval(() => {
-  now.value = Date.now()
-}, 100)
-
-onUnmounted(() => {
-  clearInterval(interval)
-})
-
-const onMove = () => {
-  if (isInCooldown.value) return
-  console.log('Move', props.character.name)
+const handleMoveSubmit = (data: Record<string, string | number>) => {
+  const x = Number(data.x)
+  const y = Number(data.y)
+  console.log(`Déplacement vers [${x}, ${y}] pour ${props.character.name}`)
+  showMovePopup.value = false
 }
 
 const onRest = () => {
   if (isInCooldown.value) return
-  console.log('Rest', props.character.name)
+  console.log('Repos de', props.character.name)
 }
 
 const onBattle = () => {
   if (isInCooldown.value) return
-  console.log('Fight', props.character.name)
+  console.log('Combat pour', props.character.name)
 }
+
+const interval = setInterval(() => (now.value = Date.now()), 100)
+onUnmounted(() => clearInterval(interval))
 </script>
 
 <style scoped>
