@@ -1,13 +1,13 @@
-import { token, server } from '../../utils/token.js';
-import { handleCooldown } from '../../utils/cooldown.js';
+import { handleCooldown } from '@/ScriptRaw/utils/cooldown';
+import { URL_API } from '@/constants'
 
-export async function moveCharacter(character, x, y) {
+export async function moveCharacter(character, x, y, token, bcool = true) {
   const moveData = {
     x: x,
     y: y,
   };
 
-  const url = `${server}/my/${character}/action/move`;
+  const url = `${URL_API}/my/${character}/action/move`;
 
   const options = {
     method: 'POST',
@@ -30,7 +30,9 @@ export async function moveCharacter(character, x, y) {
 
     console.log(`${character} Movement success`);
 
-    await handleCooldown(result.data); // ⏳ Attente si cooldown présent
+    if (bcool) {
+      await handleCooldown(result.data); // ⏳ Attente si cooldown présent
+    }
 
     return true;
   } catch (error) {

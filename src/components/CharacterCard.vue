@@ -44,34 +44,26 @@
 
       <div class="action-box">
         <img
-            @click="!isInCooldown && (showMovePopup = true)"
+            @click="onMove"
             src="@/assets/Move-32px.png"
             alt=""
             class="icon32 iconButton"
             :class="{ disabled: isInCooldown }"
         />
-
-        <PopupForm
-            v-if="showMovePopup"
-            title="Déplacement"
-            :fields="moveFields"
-            @submit="handleMoveSubmit"
-            @close="showMovePopup = false"
-        />
-        <img
-            @click="onRest"
-            src="@/assets/Rest-32px.png"
-            alt=""
-            class="icon32 iconButton"
-            :class="{ disabled: isInCooldown }"
-        />
-        <img
-            @click="onBattle"
-            src="@/assets/Fight-32px.png"
-            alt=""
-            class="icon32 iconButton"
-            :class="{ disabled: isInCooldown }"
-        />
+<!--        <img-->
+<!--            @click="onRest"-->
+<!--            src="@/assets/Rest-32px.png"-->
+<!--            alt=""-->
+<!--            class="icon32 iconButton"-->
+<!--            :class="{ disabled: isInCooldown }"-->
+<!--        />-->
+<!--        <img-->
+<!--            @click="onBattle"-->
+<!--            src="@/assets/Fight-32px.png"-->
+<!--            alt=""-->
+<!--            class="icon32 iconButton"-->
+<!--            :class="{ disabled: isInCooldown }"-->
+<!--        />-->
       </div>
     </div>
 
@@ -86,14 +78,14 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onUnmounted } from 'vue'
 import type { Character } from '@/stores/character'
-import PopupForm, { type Field } from '@/components/PopupForm.vue'
+import { computed, onUnmounted, ref } from 'vue'
 
-const props = defineProps<{ character: Character }>()
+const props = defineProps<{
+  character: Character
+}>()
 
 const now = ref(Date.now())
-const showMovePopup = ref(false)
 
 const cooldownEnd = computed(() =>
     props.character.cooldownExpiration ? new Date(props.character.cooldownExpiration).getTime() : 0
@@ -119,30 +111,38 @@ const cooldownRemaining = computed(() => {
       : `${seconds}s`
 })
 
-const moveFields: Field[] = [
-  { name: 'x', label: 'Coordonnée X', type: 'number', required: true },
-  { name: 'y', label: 'Coordonnée Y', type: 'number', required: true }
-]
+const hpPercent = computed(() =>
+    Math.min(100, (props.character.currentHp / props.character.maxHp) * 100)
+)
 
-const handleMoveSubmit = (data: Record<string, string | number>) => {
-  const x = Number(data.x)
-  const y = Number(data.y)
-  console.log(`Déplacement vers [${x}, ${y}] pour ${props.character.name}`)
-  showMovePopup.value = false
+const xpPercent = computed(() =>
+    Math.min(100, (props.character.xp / props.character.xpToNextLevel) * 100)
+)
+
+const interval = setInterval(() => {
+  now.value = Date.now()
+}, 100)
+
+onUnmounted(() => {
+  clearInterval(interval)
+})
+
+const emit = defineEmits(['move'])
+
+const onMove = () => {
+  if (isInCooldown.value) return
+  emit('move') // ← déclenche la popup depuis le parent
 }
 
 const onRest = () => {
   if (isInCooldown.value) return
-  console.log('Repos de', props.character.name)
+  console.log('Rest', props.character.name)
 }
 
 const onBattle = () => {
   if (isInCooldown.value) return
-  console.log('Combat pour', props.character.name)
+  console.log('Fight', props.character.name)
 }
-
-const interval = setInterval(() => (now.value = Date.now()), 100)
-onUnmounted(() => clearInterval(interval))
 </script>
 
 <style scoped>
@@ -250,7 +250,7 @@ onUnmounted(() => clearInterval(interval))
 .iconButton.disabled {
   filter: grayscale(1) brightness(0.6);
   cursor: not-allowed;
-  pointer-events: none; /* ← empêche tout clic même si JS n'a pas bloqué */
+  pointer-events: none;
 }
 
 .cooldown-bar {
