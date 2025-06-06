@@ -15,6 +15,7 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
           script: |
+            cd /
             cd ${{ secrets.PROJECT_PATH }}
             git pull
             npm install
